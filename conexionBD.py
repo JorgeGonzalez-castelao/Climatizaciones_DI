@@ -1,4 +1,5 @@
 import sqlite3 as dbapi
+import os
 
 
 class ConexionBD:
@@ -6,20 +7,48 @@ class ConexionBD:
 
     """
 
-    def __init__(self,rutaBd):
+    def __init__(self, rutaBd):
         """Crea as propiedades necesarias para o acceso a unha base de datos e as inicializa.
-        
+
         A clase ConexiónBD utiliza tres propiedades: rutaBd para saber cal é o lugar onde está localizado o ficheiro, conexion que referencia o obxecto connection cando este se crea e cursor que referencia o obxecto cursor cando este é inicializado. A conexión e a creación do cursor non é automática, ten que ser invocada polo programador.
 
         :param rutaBd: Ruta onde se encontra o ficheiro da base de datos SQlite
-
         """
+        if not os.path.exists(rutaBd):
+            self.createBd(rutaBd)
+
         self.rutaBd = rutaBd
         self.conexion = None
         self.cursor = None
 
+    def createBd(self, rutaBd):
+        try:
+            database = dbapi.connect(rutaBd)
+            cursor = database.cursor()
+            cursor.execute("""
+                create table cliente(
+                    username text PRIMARY KEY,
+                    contraseña text,
+                    nombre text,
+                    apellido text,
+                    direccion text,
+                    telefono text,
+                    admin boolean
+                )"""
+                           )
 
-    def conectaBD (self):
+            cursor.execute("""
+                create table producto_servicio(
+                    nombre text,
+                    descripcion text,
+                    precio real
+                )"""
+                           )
+            print("Tabla cliente creada")
+        except dbapi.DatabaseError as e:
+            print("Error creating user table:")
+
+    def conectaBD(self):
         """Método que crea a conexión da base de datos.
 
         Para realizar a conexión precisa da ruta onde está a base de datos que selle pasa no método __init__.
@@ -29,45 +58,43 @@ class ConexionBD:
         try:
             if self.conexion is None:
                 if self.rutaBd is None:
-                    print ("A ruta da base de datos é: None ")
+                    print("A ruta da base de datos é: None ")
                 else:
-                    self.conexion = dbapi.connect (self.rutaBd)
+                    self.conexion = dbapi.connect(self.rutaBd)
             else:
-                print ("Base de datos conectada: " + self.conexion)
+                print("Base de datos conectada: " + self.conexion)
 
         except dbapi.StandardError as e:
-            print ("Erro o facer a conexión a base de datos " + self.rutaBd + ": " + e)
+            print("Erro o facer a conexión a base de datos " + self.rutaBd + ": " + e)
         else:
-            print ("Conexión de base de datos realizada")
-
+            print("Conexión de base de datos realizada")
 
     def creaCursor(self):
         """Método que crea o cursor da base de datos.
 
-        Para realizar o cursor precísase previamente da execución do método conectaBD, que crea a conexión a base de 
+        Para realizar o cursor precísase previamente da execución do método conectaBD, que crea a conexión a base de
         datos na ruta onde está padada o método __init__.
 
         """
 
         try:
             if self.conexion is None:
-                print ("Creando o cursor: É necesario realizar a conexión a base de datos previamente")
+                print("Creando o cursor: É necesario realizar a conexión a base de datos previamente")
 
 
             else:
                 if self.cursor is None:
                     self.cursor = self.conexion.cursor()
                 else:
-                    print ("O cursor xa esta inicializado: " + self.cursor)
+                    print("O cursor xa esta inicializado: " + self.cursor)
 
 
         except dbapi.Error as e:
-            print (e)
+            print(e)
         else:
-            print ("Cursor preparado")
+            print("Cursor preparado")
 
-
-    def consultaSenParametros (self, consultaSQL):
+    def consultaSenParametros(self, consultaSQL):
         """Retorna unha lista cos rexistros dunha consulta realizada sen pasarlle parámetros.
 
         :param consultaSQL. Código da consulta sql a executar
@@ -86,7 +113,7 @@ class ConexionBD:
                     self.cursor.execute(consultaSQL)
 
                     for fila in self.cursor.fetchall():
-                        listaConsulta.append (fila)
+                        listaConsulta.append(fila)
 
         except dbapi.DatabaseError as e:
             print("Erro facendo a consulta: " + str(e))
@@ -139,8 +166,10 @@ class ConexionBD:
 
         except dbapi.DatabaseError as e:
             print("Erro facendo a inserción: " + str(e))
+            return False
         else:
             print("Inserción executada")
+            return True
 
     def actualizaRexistro(self, updateSQL, *parametros):
         try:
@@ -155,10 +184,12 @@ class ConexionBD:
 
         except dbapi.DatabaseError as e:
             print("Erro facendo a actualización rexistro: " + str(e))
+            return False
         else:
             print("Actualización rexistro executada")
+            return True
 
-    def borraRexistro (self, borraSQL, *parametros):
+    def borraRexistro(self, borraSQL, *parametros):
         try:
             if self.conexion is None:
                 print("Realizando borrado rexistro: É necesario realizar a conexión a base de datos previamente")
@@ -173,7 +204,6 @@ class ConexionBD:
             print("Erro facendo o borrado rexistro: " + str(e))
         else:
             print("Borrado de rexistro executado")
-
 
     def pechaBD(self):
         """Pecha o cursor e a conexión da base de datos si esta existe.

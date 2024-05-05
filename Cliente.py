@@ -1,18 +1,15 @@
 class Cliente:
-    def __init__(self, nombre, apellido, telefono, direccion):
+    def __init__(self, username, contraseña, nombre, apellido, telefono, direccion, admin=False):
+        # username clave primaria
+        self.username = username
+        self.contraseña = contraseña
         self.nombre = nombre
         self.apellido = apellido
         self.telefono = telefono
         self.direccion = direccion
+        self.admin = admin
 
-    def insertar_cliente(self):
-        # Lógica para insertar el cliente en la base de datos
-        pass
 
-    def consultar_cliente(self):
-        # Lógica para consultar un cliente en la base de datos
-        pass
 
-    def borrar_cliente(self):
-        # Lógica para borrar un cliente de la base de datos
-        pass
+    def __str__(self):
+        return f"UserName: {self.username}, Nombre: {self.nombre}, Apellido: {self.apellido}, Telefono: {self.telefono}, Direccion: {self.direccion}, Admin: {self.admin}"

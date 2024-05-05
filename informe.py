@@ -3,5 +3,5 @@ class Informe:
         self.tipo = tipo
 
     def generar_informe(self):
-        # Lógica para generar el informe utilizando Reportlab
+        # Logica para generar el informe utilizando Reportlab
         pass
