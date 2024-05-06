@@ -1,5 +1,5 @@
 class Cliente:
-    def __init__(self, username, contraseña, nombre, apellido, telefono, direccion, admin=False):
+    def __init__(self, username, contraseña, nombre, apellido, telefono, direccion, admin):
         # username clave primaria
         self.username = username
         self.contraseña = contraseña

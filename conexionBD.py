@@ -44,6 +44,13 @@ class ConexionBD:
                     precio real
                 )"""
                            )
+
+            cursor.execute("""
+                create table compra(
+                    username text,
+                    compra text 
+                )"""
+                           )
             print("Tabla cliente creada")
         except dbapi.DatabaseError as e:
             print("Error creating user table:")
