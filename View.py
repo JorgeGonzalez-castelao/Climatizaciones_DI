@@ -1,10 +1,11 @@
 import sys
 
 from PyQt6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QWidget, QLineEdit, QPushButton, QLabel, \
-    QVBoxLayout, QCheckBox, QComboBox
+    QVBoxLayout, QCheckBox, QComboBox, QTableView
 
 from Cliente import Cliente
 from Controller import Controller
+from ModeloTabla import ModeloTaboa
 
 
 class View(QMainWindow):
@@ -79,6 +80,10 @@ class View(QMainWindow):
         print(self.cliente)
         if self.cliente.admin:
             bCreateProduct = QPushButton("Crear Producto")
+            bEditProduct = QPushButton("Editar Producto")
+            bDeleteProduct = QPushButton("Borrar Producto")
+            bEditProduct.setToolTip("Ponga el nombre del producto (case sensitive) y los nuevos valores en los campos correspondientes")
+            bDeleteProduct.setToolTip("Ponga el nombre del producto (case sensitive) que desea borrar")
             box2 = QHBoxLayout()
             nombre = QLineEdit()
             nombre.setPlaceholderText("Nombre")
@@ -90,16 +95,18 @@ class View(QMainWindow):
             box2.addWidget(descripcion)
             box2.addWidget(precio)
             bCreateProduct.pressed.connect(lambda: self.createProduct(nombre.text(), descripcion.text(), precio.text()))
+            bEditProduct.pressed.connect(lambda: self.editProduct(nombre.text(), descripcion.text(), precio.text()))
+            bDeleteProduct.pressed.connect(lambda: self.deleteProduct(nombre.text()))
             box.addLayout(box2)
-            box.addWidget(bCreateProduct)
+            boxButtons = QHBoxLayout()
+            boxButtons.addWidget(bCreateProduct)
+            boxButtons.addWidget(bEditProduct)
+            boxButtons.addWidget(bDeleteProduct)
+            box.addLayout(boxButtons)
         self.comboProductos = QComboBox()
         self.comboProductos.addItem("")
         print("Consultar productos")
-        productos = self.controller.consultar_producto_servicio()
-        for producto in productos:
-            print(producto)
-            texto = producto[0] + ", " + str(producto[2]) + "€"
-            self.comboProductos.addItem(texto)
+        self.addItemsToComboProductos()
         boxPedido = QHBoxLayout()
         boxPedido.addWidget(self.comboProductos)
         self.cantidad = QLineEdit()
@@ -121,6 +128,47 @@ class View(QMainWindow):
         container.setLayout(box)
         return container
 
+    def seeBoughtsView(self):
+        box = QVBoxLayout()
+        compras = self.controller.consultar_compra(self.cliente.username)
+        print(compras)
+        tabla = QTableView()
+        modeloTabla = ModeloTaboa(compras, ["ID compra", "Nombre", "Compra"])
+        tabla.setModel(modeloTabla)
+        # seleccionar toda la fila
+        tabla.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+        # seleccionar solo una fila
+        tabla.setSelectionMode(QTableView.SelectionMode.SingleSelection)
+        tabla.selectRow(0)
+        # hacer la selección
+        seleccion = tabla.selectionModel()
+        botonVolver = QPushButton("Ir a comprar")
+        botonVolver.pressed.connect(lambda: self.changeToLoggedView("Compras"))
+        box.addWidget(tabla)
+        box.addWidget(botonVolver)
+        if self.admin:
+            botonBorrar = QPushButton("Borrar Compra")
+            botonBorrar.pressed.connect(lambda: self.borrar_compra(compras[seleccion.selectedIndexes()[0].row()][0]))
+            box.addWidget(botonBorrar)
+        container = QWidget()
+        container.setLayout(box)
+        return container
+
+    def borrar_compra(self, id_compra):
+        self.controller.borrar_compra(id_compra)
+        self.ventanaCompras.hide()
+        self.ventanaCompras = self.seeBoughtsView()
+        self.ventanaCompras.show()
+        self.contenedorPrincipal.addWidget(self.ventanaCompras)
+
+    def addItemsToComboProductos(self):
+        self.comboProductos.clear()
+        productos = self.controller.consultar_producto_servicio()
+        for producto in productos:
+            print(producto)
+            texto = producto[0] + ", " + str(producto[2]) + "€"
+            self.comboProductos.addItem(texto)
+
     def on_comprar_pressed(self):
         print(self.cliente.username + " va a comprar: " + str(self.productbuy))
         self.controller.insertar_compra(self.cliente.username, self.productbuy)
@@ -129,7 +177,7 @@ class View(QMainWindow):
 
     def addProduct(self, item, cantidad):
         item = item.split(",")
-        self.productbuy.append((item[0], item[1],cantidad))
+        self.productbuy.append((item[0], item[1], cantidad))
         print(self.productbuy)
         self.comboProductos.setCurrentIndex(0)
         self.cantidad.clear()
@@ -139,6 +187,14 @@ class View(QMainWindow):
         print("Crear Producto")
         self.controller.insertar_producto_servicio(nombre, descripcion, precio)
         self.comboProductos.addItem(nombre + ", " + str(precio) + "€")
+
+    def editProduct(self, nombre, descripcion, precio):
+        self.controller.modificar_producto_servicio(nombre, descripcion, precio)
+        self.addItemsToComboProductos()
+
+    def deleteProduct(self, nombre):
+        self.controller.borrar_producto_servicio(nombre)
+        self.addItemsToComboProductos()
 
     def on_loggin_pressed(self, text, username, password, nombre, apellido, direccion, telefono, admin):
         if text == "Iniciar Sesión":
@@ -152,7 +208,6 @@ class View(QMainWindow):
             self.cliente = self.controller.get_cliente(username)
             self.changeToLoggedView("Log in")
 
-
     def changeToLoggedView(self, proveniente):
         if proveniente == "Log in":
             self.ventanaLogin.hide()
@@ -164,19 +219,6 @@ class View(QMainWindow):
             self.ventanaLogged = self.productsView()
             self.ventanaLogged.show()
             self.contenedorPrincipal.addWidget(self.ventanaLogged)
-    def seeBoughtsView(self):
-        box = QVBoxLayout()
-        compras = self.controller.consultar_compra(self.cliente.username)
-        label = QLabel("Compras: \n")
-        for compra in compras:
-            label.setText(label.text() + compra[1] + "\n")
-        box.addWidget(label)
-        botonVolver = QPushButton("Ir a comprar")
-        botonVolver.pressed.connect(lambda: self.changeToLoggedView("Compras"))
-        box.addWidget(botonVolver)
-        container = QWidget()
-        container.setLayout(box)
-        return container
 
     def changeToSeeBoughts(self):
         self.ventanaLogged.hide()

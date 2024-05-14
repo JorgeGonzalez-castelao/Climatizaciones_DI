@@ -13,10 +13,10 @@ class Controller:
         print("hola")
         textoCompra = ""
         for producto in compra:
-            textoCompra += producto[0] + producto[1] + " " + str(producto[2]) + "; "
+            textoCompra += producto[0] + producto[1] + " x " + str(producto[2]) + "; "
             print(textoCompra)
         inserccion = self.conexion.engadeRexistro(
-            "INSERT INTO compra VALUES (?, ?)",
+            "INSERT INTO compra (username, compra) VALUES (?, ?)",
             username, textoCompra
         )
         print("hola")
@@ -27,6 +27,10 @@ class Controller:
         compra = self.conexion.consultaConParametros("SELECT * FROM compra WHERE username = ?", username)
         return compra
 
+    def borrar_compra(self, id):
+        self.conexion.borraRexistro("DELETE FROM compra WHERE id = ?", id)
+
+
     # ProductoServicio
     def insertar_producto_servicio(self, nombre, descripcion, precio):
         inserccion = self.conexion.engadeRexistro(
@@ -35,6 +39,11 @@ class Controller:
         )
         if inserccion:
             print("Producto/Servicio insertado")
+
+    def modificar_producto_servicio(self, nombre, descripcion, precio):
+        modificacion = self.conexion.actualizaRexistro("UPDATE producto_servicio SET descripcion = ?, precio = ? WHERE nombre = ?", descripcion, precio, nombre)
+        if modificacion:
+            print("Producto/Servicio modificado")
 
     def consultar_producto_servicio(self):
         producto_servicio = self.conexion.consultaSenParametros("SELECT * FROM producto_servicio")

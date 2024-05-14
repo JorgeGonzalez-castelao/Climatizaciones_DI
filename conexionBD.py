@@ -47,6 +47,7 @@ class ConexionBD:
 
             cursor.execute("""
                 create table compra(
+                    id integer PRIMARY KEY AUTOINCREMENT,
                     username text,
                     compra text 
                 )"""
