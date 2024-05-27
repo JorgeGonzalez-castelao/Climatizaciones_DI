@@ -9,19 +9,17 @@ class Controller:
         self.conexion.conectaBD()
         self.conexion.creaCursor()
 
-    def insertar_compra(self, username, compra):
-        print("hola")
+    def insertar_compra(self, username, compra, total):
         textoCompra = ""
         for producto in compra:
             textoCompra += producto[0] + producto[1] + " x " + str(producto[2]) + "; "
             print(textoCompra)
-        inserccion = self.conexion.engadeRexistro(
-            "INSERT INTO compra (username, compra) VALUES (?, ?)",
-            username, textoCompra
+        inserccion = self.conexion.engadeRexistroDevolveId(
+            "INSERT INTO compra (username, compra, total) VALUES (?, ?, ?)",
+            username, textoCompra, total
         )
-        print("hola")
-        if inserccion:
-            print("Compra insertada")
+        print(inserccion)
+        return inserccion
 
     def consultar_compra(self, username):
         compra = self.conexion.consultaConParametros("SELECT * FROM compra WHERE username = ?", username)
@@ -58,12 +56,12 @@ class Controller:
             print("Producto/Servicio borrado")
 
     # Clientes
-    def insertar_cliente(self, username, contraseña, nombre, apellido, telefono, direccion, admin):
-        cliente = Cliente(username, contraseña, nombre, apellido, telefono, direccion, admin)
+    def insertar_cliente(self, username, contraseña, nombre, apellido, direccion, telefono, admin):
+        cliente = Cliente(username=username, contraseña=contraseña, nombre=nombre, apellido=apellido, direccion=direccion, telefono=telefono, admin=admin)
         print(cliente.__str__())
         return self.conexion.engadeRexistro(
             "INSERT INTO cliente VALUES (?, ?, ?, ?, ?, ?, ?)",
-            username, contraseña, nombre, apellido, telefono, direccion, admin
+            username, contraseña, nombre, apellido, direccion, telefono, admin
         )
 
     def consultar_cliente(self, username, contraseña):

@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QWidget, QLi
 from Cliente import Cliente
 from Controller import Controller
 from ModeloTabla import ModeloTaboa
+from informe import Informe
 
 
 class View(QMainWindow):
@@ -118,9 +119,13 @@ class View(QMainWindow):
         box.addWidget(bAddProduct)
         self.labelProductosComprar = QLabel("Productos en la cesta: ")
         box.addWidget(self.labelProductosComprar)
+        boxComprar = QHBoxLayout()
+        facturaCheck = QCheckBox("Factura")
         btnComprar = QPushButton("Comprar")
-        btnComprar.pressed.connect(lambda: self.on_comprar_pressed())
-        box.addWidget(btnComprar)
+        btnComprar.pressed.connect(lambda: self.on_comprar_pressed(facturaCheck.isChecked()))
+        boxComprar.addWidget(facturaCheck)
+        boxComprar.addWidget(btnComprar)
+        box.addLayout(boxComprar)
         btnCompras = QPushButton("Ver Compras")
         btnCompras.pressed.connect(lambda: self.changeToSeeBoughts())
         box.addWidget(btnCompras)
@@ -133,8 +138,9 @@ class View(QMainWindow):
         compras = self.controller.consultar_compra(self.cliente.username)
         print(compras)
         tabla = QTableView()
-        modeloTabla = ModeloTaboa(compras, ["ID compra", "Nombre", "Compra"])
+        modeloTabla = ModeloTaboa(compras, ["ID compra", "Nombre", "Compra", "Total"])
         tabla.setModel(modeloTabla)
+        tabla.resizeColumnsToContents()
         # seleccionar toda la fila
         tabla.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         # seleccionar solo una fila
@@ -169,16 +175,24 @@ class View(QMainWindow):
             texto = producto[0] + ", " + str(producto[2]) + "€"
             self.comboProductos.addItem(texto)
 
-    def on_comprar_pressed(self):
-        print(self.cliente.username + " va a comprar: " + str(self.productbuy))
-        self.controller.insertar_compra(self.cliente.username, self.productbuy)
+    def on_comprar_pressed(self, facturaCheck):
+        print(self.cliente.username + " va a comprar: " + str(self.productbuy) + " por un total de: " + str(self.total) + "€")
+        if facturaCheck:
+            id = self.controller.insertar_compra(self.cliente.username, self.productbuy, self.total)
+            print(id)
+            Informe(id=id, username=self.cliente.username, compras=self.productbuy, total=self.total, nombre=self.cliente.nombre, apellido=self.cliente.apellido, direccion=self.cliente.direccion, telefono=self.cliente.telefono)
+            print("Factura generada")
         self.labelProductosComprar.setText("Productos en la cesta: ")
         self.productbuy = []
+        self.total = 0
 
     def addProduct(self, item, cantidad):
         item = item.split(",")
         self.productbuy.append((item[0], item[1], cantidad))
+        print(float(item[1].split("€")[0].lstrip()))
         print(self.productbuy)
+        self.total = self.total + int(cantidad) * float(item[1].split("€")[0].lstrip())
+        print(self.total)
         self.comboProductos.setCurrentIndex(0)
         self.cantidad.clear()
         self.labelProductosComprar.setText(self.labelProductosComprar.text() + "\n " + item[0] + ", " + str(cantidad) + " unidades, " + str(item[1]) + " = " + str(int(cantidad) * float(item[1].split("€")[0])) + "€")
@@ -209,6 +223,7 @@ class View(QMainWindow):
             self.changeToLoggedView("Log in")
 
     def changeToLoggedView(self, proveniente):
+        self.total = 0
         if proveniente == "Log in":
             self.ventanaLogin.hide()
             self.ventanaLogged = self.productsView()

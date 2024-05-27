@@ -49,7 +49,8 @@ class ConexionBD:
                 create table compra(
                     id integer PRIMARY KEY AUTOINCREMENT,
                     username text,
-                    compra text 
+                    compra text,
+                    total real
                 )"""
                            )
             print("Tabla cliente creada")
@@ -178,6 +179,22 @@ class ConexionBD:
         else:
             print("Inserción executada")
             return True
+
+    def engadeRexistroDevolveId(self, insertSQL, *parametros):
+        try:
+            if self.conexion is None:
+                print("Realizando inserción: É necesario realizar a conexión a base de datos previamente")
+            else:
+                if self.cursor is None:
+                    print("Realizando inserción: É necesario realizar a creación do cursor previamente")
+                else:
+                    self.cursor.execute(insertSQL, parametros)
+                    self.conexion.commit()
+        except dbapi.DatabaseError as e:
+            print("Erro facendo a inserción: " + str(e))
+            return False
+        else:
+            return self.cursor.lastrowid  # Devuelve el id del último registro insertado (sacado de stackoverflow)
 
     def actualizaRexistro(self, updateSQL, *parametros):
         try:
